@@ -49,11 +49,11 @@ Do wykonania zadań została utworzona sieć o schemacie przedstawionym poniżej
 Ręcznie wybiorę adresy, które przypiszę statycznie interfejsom maszyn.
 
 \subsection{Wybór adresów}
-Ponieważ wiem, że będę potrzebował 2 sieci postanowiłem podzielić prywatną sieć \texttt{192.168.0.0} na dwie podsieci. W celu ułatwienia obliczeń postanowiłem, że maska podsieci będzie \textbf{24 bitowa}.
+Ponieważ wiem, że będę potrzebował 2 sieci postanowiłem wykorzystać podsieci prywatnej sieci \texttt{192.168.0.0}. W celu ułatwienia obliczeń zdecydowałem, że maska podsieci będzie \textbf{24 bitowa}.
 
 \begin{itemize}
   \item Adres pierwszej sieci -- \texttt{192.168.0.0/24}.
-  \item Adres drugiej sieci -- \texttt{192.168.1.0/24}.
+  \item Adres drugiej sieci -- \texttt{192.168.2.0/24}.
 \end{itemize}
 
 Maszyna Vm1 otrzyma statyczny adres \texttt{192.168.0.1/24}, a maszyna Vm2 \texttt{192.168.0.2/24}.
@@ -95,7 +95,71 @@ Z wyniku komendy widać, że maszyny są ze sobą połączone i mogą wymieniać
 
 \section{Dynamiczne adresowanie}
 %TODO: Dynamiczne adresowanie
+Postanowiłem wykorzystać inną wirtualną maszynę jako serwer DHCP. Wybrałem maszynę z systemem Ubuntu.
 
+\subsection{Konfiguracja serwera}
+Maszyna ubuntu ma dwa wirtualne interfejsy fizyczne. Tak jak u Vm1 i Vm2 jeden jest podłączony mostem do gospodarza, a drugi do sieci wewnętrznej \textit{intnet}.
+
+Zainstalowałem serwer DHCP pleceniem \texttt{sudo apt install isc-dhcp-server}. Następnie skonfigurowałem serwer edytując dwa pliki systemowe.
+
+W pliku \texttt{/etc/default/isc-dhcp-server} umieściłem linię \texttt{INTERFACES="enp0s8"}, która wskazuje na jakim interfejsie serwer DHCP ma pracować.
+
+W pliku \texttt{/etc/dhcp/dhcpd.conf} umieściłem konfigurację samego serwera. Zawartość tego pliku wygląda następująco:
+
+\begin{verbatim}
+ddns-update-style none;
+default-lease-time 600;
+max-lease-time 7200;
+
+subnet 192.168.2.0 netmask 255.255.255.0 {
+  range 192.168.2.1 192.168.2.253;
+}
+\end{verbatim}
+
+Definiuje on na jaki czas będą przydzielane adresy oraz z jakie puli będą pochodzić.
+
+Po zakończeniu konfiguracji uruchomiłem serwer poleceniem \texttt{sudo systemctl start isc-dhcp-server.service} oraz \texttt{sudo systemctl enable isc-dhcp-server.service}
+
+\vspace{3mm}
+By sprawdzić czy serwer działa wykonałem komendę \texttt{systemctl status isc-dhcp-server.service}.
+\begin{verbatim}
+  isc-dhcp-server.service - ISC DHCP IPv4 server
+   Loaded: loaded (/lib/systemd/system/isc-dhcp-server.service; enabled; vendor preset: enabled)
+   Active: active (running) since wto 2019-04-16 18:06:48 CEST; 14min ago
+     Docs: man:dhcpd(8)
+ Main PID: 3186 (dhcpd)
+   CGroup: /system.slice/isc-dhcp-server.service
+           3186 dhcpd -user dhcpd -group dhcpd -f -4 -pf /run/dhcp-server/dhcpd.pid -cf /etc/dhcp/dhcpd.conf enp0s8
+\end{verbatim}
+
+\subsection{Dynamiczne przydzielenie adresów}
+By pozyskać adres od serwera DHCP na maszynach Vm1 i Vm2 uruchomiłem komendę \texttt{dhclient em1}.
+
+\vspace{2mm}
+Działanie na maszynie Vm1:
+\begin{verbatim}
+  # dhclient em1
+  DHCPREQUEST on em1 to 255.255.255.255 port 67
+  DHCPREQUEST on em1 to 255.255.255.255 port 67
+  DHCPDISCOVER on em1 to 255.255.255.255 port 67 interval 7
+  DHCPOFFER from 192.168.2.254
+  DHCPREQUEST on em1 to 255.255.255.255 port 67
+  DHCPACK from 192.168.2.254
+  bound to 192.168.2.1 -- renewal in 300 seconds.
+\end{verbatim}
+
+Działanie na maszynie Vm2:
+\begin{verbatim}
+  # dhclient em1
+  DHCPDISCOVER on em1 to 255.255.255.255 port 67 interval 6
+  DHCPOFFER from 192.168.2.254
+  DHCPREQUEST on em1 to 255.255.255.255 port 67
+  DHCPACK from 192.168.2.254
+  bound to 192.168.2.2 -- renewal in 300 seconds.
+\end{verbatim}
+
+Można zaobserwować, że serwer przydzielił dwa pierwsze adresy maszynom.
+ 
 \section{Druga warstwa sieciowa}
 %TODO: Druga warstwa sieciowa
 

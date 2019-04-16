@@ -1,0 +1,225 @@
+#!/bin/sh
+# config/dhcpd-mini
+# Minimalna konfiguracja serwera DHCP
+# ato 2019
+
+# Patrz: /pub/Linux/Ubuntu/zetis/install/dhcpd
+
+CONFIG=/etc/dhcp/dhcpd.conf		# Plik konfiguracyjny serwera DHCP
+
+# Konversja IP (a.b.c.d)  (implemntacja inet_ntoa i inet_aton)
+
+inet_aton () { # arg   			# Zamiana a.b.c.d na liczbę binarną
+  local n a i
+  a=$1
+  n=0
+  for i in 1 2 3 4 ; do
+    n=$(($n << 8 | ${a%%.*}))		# XXX psuje kolory
+    a=${a#*.}				# Usuń "a."
+  done
+  echo $n
+}
+
+inet_ntoa () { # arg   			# Zamiana liczby binarnej na notację a.b.c.d
+  local n a
+  n=$1
+  a=$(($n & 255))
+  n=$(($n >> 8))
+  while [ $n -ne 0 -a $n -ne -1 ]; do
+    a=$(($n & 255)).$a
+    n=$(($n >> 8))
+  done
+  echo $a
+}
+
+ifconfig-ip4 () { # name		# Przykładowa wersja statyczna.
+  IP=10.0.0.1				# Adres interfejsu
+  MASK=255.255.255.0			# Maska sieci
+}
+
+ifconfig-ip4 () { # name		# Pobierz adres IPv4 interfejsu.
+  # TODO z użyciem ip zamiast ifconfig - kolory
+  IP=$(ifconfig $1 | grep -w inet | sed 's/.*addr:\([0-9\.]*[0-9]\).*/\1/')	# 10.146.225.10
+  MASK=$(ifconfig $1 | grep -w inet | sed 's/.*Mask:\([0-9\.]*[0-9]\).*/\1/')	# 255.255.0.0
+  # inet addr:10.146.225.10  Bcast:10.146.255.255  Mask:255.255.0.0
+}
+
+Parametry () { # [interfejs]		# Automatyczne ustawienie parametrów serwera: $NET
+  IFN=${1:-$(ifname-gate)}		# 1 parametr lub dynamicznie		# eno2
+  ifconfig-ip4 $IFN			# Pobierz adres IPv4 interfejsu do $IP i $MASK
+  Oblicz_net_i_zakres $IP $MASK		#
+}
+
+Oblicz_net_i_zakres () { # 		# Przykładowa wersja statyczna.
+  NET=10.0.0.0				# Adres sieci
+  IP_OD=10.0.0.1			# Adres początkowy alokacji
+  IP_DO=10.0.0.254			# Adres końcowy alokacji
+}
+
+Oblicz_net_i_zakres () { # IP MASK	# Obliczenie $NET $IP_OD $IP_DO na podstawie $IP i $MASK. Wersja dynamiczna
+  IP=$(inet_aton $1)			# Konwersja do postaci binarnej
+  MASK=$(inet_aton $2)			#
+
+  # Obliczenie wartości:
+  NET=$(($IP & $MASK))			# Adres sieci
+  IP_OD=$(($IP + 1)			# Adres początkowy
+  IP_DO=$(($IP + ($IP & ~ $MASK) - 1))	# Adres końcowy = rozgłoszenie - 1
+
+  NET=$(ip-write)			# Konwersja do postaci a.b.c.d :
+  IP_OD=$(inet_ntoa $IP_OD)		#
+  IP_DO=$(inet_ntoa $IP_DO)		#
+}
+
+# START
+
+sudo=echo
+[ $(id -un) = root ] && sudo=		# Wykonanie tylko dla root-a
+
+IFN=${1:-eno1}				# Interfejs na którym działa serwis DHCP.
+
+parametry $IFN				# Ustaw zmienne: $IP $MASK $NET $IP_OD $IP_DO
+
+if [ -f $CONFIG ]; then  		# Zachowanie istniejącej konfiguracji
+  $sudo mv $CONFIG $CONFIG-o	# Zachowanie istniejącej konfiguracji
+fi
+
+$sudo tee -a $CONFIG <<EOF		# Generacja pliku konfiguracyjnego
+# Przykładowa konfiguracja serwera DHCP dla ISC dhcpd
+ddns-update-style none;
+option domain-name "example.org";
+option domain-name-servers ns1.example.org, ns2.example.org;
+
+default-lease-time 600;
+max-lease-time 7200;
+
+subnet $NET netmask $MASKA {
+  option subnet-mask $MASKA;
+  range $IP_OD $IP_DO;
+ #option domain-name "internal.example.org";
+ #option domain-name-servers ns1.internal.example.org;
+ #option routers $IP;
+  default-lease-time 600;
+  max-lease-time 7200;
+}
+
+#host vm1 { hardware ethernet 08:00:07:26:c0:a5; fixed-address 10.0.0.10; }
+#host vm2 { hardware ethernet 0:0:c0:5d:bd:95; filename "file.ext"; server-name "vm2"; }
+EOF
+
+cat $CONFIG				# Pokaż konfigurację
+
+echo "Przeładuj serwer DHCP poleceniem:"
+echo "sudo systemctl reload isc-dhcp-server"
+
+exit
+
+# Sample configuration file for ISC dhcpd for Debian
+#
+# Attention: If /etc/ltsp/dhcpd.conf exists, that will be used as
+# configuration file instead of this file.
+#
+#
+
+# The ddns-updates-style parameter controls whether or not the server will
+# attempt to do a DNS update when a lease is confirmed. We default to the
+# behavior of the version 2 packages ('none', since DHCP v2 didn't
+# have support for DDNS.)
+ddns-update-style none;
+
+# option definitions common to all supported networks...
+option domain-name "example.org";
+option domain-name-servers ns1.example.org, ns2.example.org;
+
+default-lease-time 600;
+max-lease-time 7200;
+
+# If this DHCP server is the official DHCP server for the local
+# network, the authoritative directive should be uncommented.
+#authoritative;
+
+# Use this to send dhcp log messages to a different log file (you also
+# have to hack syslog.conf to complete the redirection).
+log-facility local7;
+
+# No service will be given on this subnet, but declaring it helps the
+# DHCP server to understand the network topology.
+
+#subnet 10.152.187.0 netmask 255.255.255.0 {
+#}
+
+# This is a very basic subnet declaration.
+
+#subnet 10.254.239.0 netmask 255.255.255.224 {
+#  range 10.254.239.10 10.254.239.20;
+#  option routers rtr-239-0-1.example.org, rtr-239-0-2.example.org;
+#}
+
+# This declaration allows BOOTP clients to get dynamic addresses,
+# which we don't really recommend.
+
+#subnet 10.254.239.32 netmask 255.255.255.224 {
+#  range dynamic-bootp 10.254.239.40 10.254.239.60;
+#  option broadcast-address 10.254.239.31;
+#  option routers rtr-239-32-1.example.org;
+#}
+
+# A slightly different configuration for an internal subnet.
+#subnet 10.5.5.0 netmask 255.255.255.224 {
+#  range 10.5.5.26 10.5.5.30;
+#  option domain-name-servers ns1.internal.example.org;
+#  option domain-name "internal.example.org";
+#  option subnet-mask 255.255.255.224;
+#  option routers 10.5.5.1;
+#  option broadcast-address 10.5.5.31;
+#  default-lease-time 600;
+#  max-lease-time 7200;
+#}
+
+# Hosts which require special configuration options can be listed in
+# host statements.   If no address is specified, the address will be
+# allocated dynamically (if possible), but the host-specific information
+# will still come from the host declaration.
+
+#host passacaglia {
+#  hardware ethernet 0:0:c0:5d:bd:95;
+#  filename "vmunix.passacaglia";
+#  server-name "toccata.fugue.com";
+#}
+
+# Fixed IP addresses can also be specified for hosts.   These addresses
+# should not also be listed as being available for dynamic assignment.
+# Hosts for which fixed IP addresses have been specified can boot using
+# BOOTP or DHCP.   Hosts for which no fixed address is specified can only
+# be booted with DHCP, unless there is an address range on the subnet
+# to which a BOOTP client is connected which has the dynamic-bootp flag
+# set.
+#host fantasia {
+#  hardware ethernet 08:00:07:26:c0:a5;
+#  fixed-address fantasia.fugue.com;
+#}
+
+# You can declare a class of clients and then do address allocation
+# based on that.   The example below shows a case where all clients
+# in a certain class get addresses on the 10.17.224/24 subnet, and all
+# other clients get addresses on the 10.0.29/24 subnet.
+
+#class "foo" {
+#  match if substring (option vendor-class-identifier, 0, 4) = "SUNW";
+#}
+
+#shared-network 224-29 {
+#  subnet 10.17.224.0 netmask 255.255.255.0 {
+#    option routers rtr-224.example.org;
+#  }
+#  subnet 10.0.29.0 netmask 255.255.255.0 {
+#    option routers rtr-29.example.org;
+#  }
+#  pool {
+#    allow members of "foo";
+#    range 10.17.224.10 10.17.224.250;
+#  }
+#  pool {
+#    deny members of "foo";
+#    range 10.0.29.10 10.0.29.230;
+#  }
+#}

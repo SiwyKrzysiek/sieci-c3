@@ -1,0 +1,40 @@
+#!/bin/sh
+# vbmk-dhcp
+# Dodanie serwera DHCP w sieci typu internal
+# ato 2019
+
+# Używa zewnetrznego skryptu: maska
+
+usage () {
+  echo "użycie: $PROG nazwa_sieci  [ip/maska]  # uruchomienie serwera DHCP w sieci internal"
+  echo "standardowe wartości: 10.0.0.0/24"
+  exit
+}
+
+# START
+
+PROG=${0##*/}
+
+case "$1" in
+-*|'') usage ;;
+esac
+
+NET=${1:-internal}			# Nazwa sieci typu internal (dowolna)
+
+IP=${2:-"10.0.0.1/24"}			# Adres serwera DHCP + pula IP alokowana przez serwer
+
+case "$IP" in				
+*/*)
+  DHCP=${IP%/*}				#
+  MASK=$(maska ${IP#*/})		# np. 255.255.255.0
+  IP_OD=${DHCP%.*}.$((${DHCP##*.}+1))	# Początek przedziału alokacji
+  IP_DO=${DHCP%.*}.$((${DHCP##*.}+99))	# Koniec przedziału alokacji
+  ;;
+*) użycie ;;
+esac
+
+Polecenie=add
+#Polecenie=modify
+
+echo vboxmanage dhcpserver $Polecenie --netname $NET \
+--ip $DHCP --netmask $MASK --lowerip $IP_OD --upperip $IP_DO --enable

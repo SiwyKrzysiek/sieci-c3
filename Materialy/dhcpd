@@ -1,0 +1,49 @@
+#!/bin/sh
+# install/dhcpd
+# Instalacja serwera DHCP
+# ato 2013-2019
+
+# https://www.isc.org/downloads/dhcp/
+# https://help.ubuntu.com/community/isc-dhcp-server
+# https://www.howtoforge.com/tutorial/install-and-configure-isc-dhcp-server-in-debian-9/
+
+apt_get () {
+  $sudo env DEBIAN_FRONTEND=noninteractive apt-get $*
+}
+
+config_dhcp_ipxe () { 			# Przykładowa konfiguracja dla ipxe (www.ipxe.org)
+  wget https://gist.github.com/robinsmidsrod/4008017/raw/71d9fc351652d29099bb25fff325f111aa66c820/dhcpd.conf
+  wget https://gist.github.com/robinsmidsrod/4008017/raw/5a10c6d51a4629a7abf973b7874e40fd1e7945ba/ipxe-green.conf
+  wget https://gist.github.com/robinsmidsrod/4008017/raw/b4c7949a310e0a9c63336ab182e13f04b3241965/ipxe-option-space.conf
+  file=/etc/dhcp/dhcpd.conf
+  $sudo mv $file $file-o
+  $sudo mv dhcpd.conf pxe-green.conf ipxe-option-space.conf /etc/dhcp/
+}
+
+config_dhcp () {			# Konfiguracja
+  file=/etc/dhcp/dhcpd.conf
+  $sudo mv $file $file-o
+  sudo $EDITOR $file			# TODO
+}
+
+config_dhcp () {			# Konfiguracja
+  /pub/Linux/Ubuntu/zetis/config/dhcpd-mini
+}
+
+# START
+
+exec >/tmp/install-dhcpd 2>&1 ; set -x	# DEBUG
+
+[ "$USER" = "root" ] || sudo=sudo
+
+apt_get install -yq isc-dhcp-server	# Instalacja serwera
+
+config_dhcp				# Konfiguracja serwera
+
+ls -l /etc/dhcp/dhcpd.conf		# Plik konfiguracyjny
+
+$sudo systemctl statrt isc-dhcp-server	# Uruchomienie
+
+systemctl status isc-dhcp-server	# Status serwisu
+
+exit
