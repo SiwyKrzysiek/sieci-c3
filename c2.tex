@@ -5,6 +5,8 @@
 \usepackage{textcomp} % Znaki specjalne takie jak ~
 \usepackage{xcolor} % Definicje kolorów
 
+\renewcommand{\labelitemi}{\textbullet} % Zmiana symbolu wliczeń
+
 \usepackage{graphicx}
 \graphicspath{ {./Obrazy/} }
 \usepackage{float} % Pozycjonowanie figur
@@ -33,10 +35,29 @@ Celem laboratoriów \textit{c3} było utworzenie kilku sieci wewnętrznych oraz 
 Do wykonania zadań została utworzona sieć o schemacie przedstawionym poniżej.
 
 %TODO: Schemat sieci
-\includegraphics[width=\textwidth]{example-image-a}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{example-image-a}
+  
+  \caption{Schemat budowanej sieci}
+  \label{fig:SchematSieci}
+\end{figure}
 
 \section{Statyczne adresowanie}
 %TODO: Statyczne adresowanie
+%TODO: Spytać tatę czy może być puste
+Ręcznie wybiorę adresy, które przypiszę statycznie interfejsom maszyn.
+
+\subsection{Wybór adresów}
+Ponieważ wiem, że będę potrzebował 2 sieci postanowiłem podzielić prywatną sieć \texttt{192.168.0.0} na dwie podsieci. W celu ułatwienia obliczeń postanowiłem, że maska podsieci będzie \textbf{24 bitowa}.
+
+\begin{itemize}
+  \item Adres pierwszej sieci -- \texttt{192.168.0.0/24}.
+  \item Adres drugiej sieci -- \texttt{192.168.1.0/24}.
+\end{itemize}
+
+Maszyna Vm1 otrzyma statyczny adres \texttt{192.168.0.1/24}, a maszyna Vm2 \texttt{192.168.0.2/24}.
+
 
 \section{Dynamiczne adresowanie}
 %TODO: Dynamiczne adresowanie
