@@ -205,6 +205,32 @@ em1: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> metric 0 mtu 1500
 Widać wyraźnie, że interfejsy \texttt{em1} mają przypisane \textbf{dwa} adresy ip z różnych sieci.
 
 \section{Analiza ruchu sieciowego}
-%TODO: Analiza ruchu sieciowego
+W celu zbadania ruchu sieciowego skorzystam z konsolowego narzędzia \texttt{tcpdump}.
+
+\subsection{Badanie ARP}
+By przechwycić ruch związany z protokołem ARP uruchomiłem nasłuchiwanie na maszynie Vm1 poleceniem \texttt{tcpdump -i em1 -X arp}.
+
+Maszyna Vm2 ma zapamiętany adres MAC maszyny Vm1 ponieważ wykonywałem pingowanie. Aby to zmienić muszę wyczyścić cashe ARP poleceniem \texttt{arp -d -a}.
+
+Wykonałem polecenie \texttt{ping -c 2 192.168.2.254} na Vm2 by sprowokować użycie ARP.
+
+\paragraph{Wynik działania tcpdump:}
+\begin{verbatim}
+# tcpdump -i em1 -X arp
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on em1, link-type EN10MB (Ethernet), capture size 262144 bytes
+20:38:26.599494 ARP, Request who-has 192.168.2.254 tell 192.168.2.2, length 46
+        0x0000:  0001 0800 0604 0001 0800 279e 5d3c c0a8  ..........'.]<..
+        0x0010:  0202 0000 0000 0000 c0a8 02fe 0000 0000  ................
+        0x0020:  0000 0000 0000 0000 0000 0000 0000       ..............
+^C
+1 packet captured
+1 packet received by filter
+0 packets dropped by kernel
+\end{verbatim}
+
+Z przechwyconych informacji można wywnioskować, że maszyna o adresie \texttt{192.168.2.2} pytała o to kto ma adres \texttt{192.168.2.254}.
+
+\subsection{Badanie DHCP}
 
 \end{document}
