@@ -58,6 +58,40 @@ Ponieważ wiem, że będę potrzebował 2 sieci postanowiłem podzielić prywatn
 
 Maszyna Vm1 otrzyma statyczny adres \texttt{192.168.0.1/24}, a maszyna Vm2 \texttt{192.168.0.2/24}.
 
+\subsection{Ustawienie adresów}
+Poleceniem \texttt{ifconfig} sprawdziłem, który interfejs jest podłączony do sieci wewnętrznej. Interfejs \texttt{em0} ma ustawiony adres ip, a \texttt{em1} nie ma. Dzięki temu wiem, że \textbf{em1} jest podłączony do sieci wewnętrznej.
+
+Poleceniem \texttt{ifconfig em1 192.168.0.1/24} nadałem adres. By upewnić się, że polecenie zadziało wywołałem \texttt{ifconfig em1}.
+
+\begin{verbatim}
+root@:~ # ifconfig em1
+em1: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> metric 0 mtu 1500
+        options=81009b<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,VLAN_HWCSUM,VLAN_HWFILTER>
+        ether 08:00:27:d1:f2:36
+        inet 192.168.0.1 netmask 0xffffff00 broadcast 192.168.0.255
+        media: Ethernet autoselect (1000baseT <full-duplex>)
+        status: active
+        nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
+\end{verbatim}
+
+Postępuje analogicznie na maszynie Vm2 nadając jej adres \texttt{192.168.0.2/24}
+
+\subsection{Test połączenia}
+W celu sprawdzenia utworzonej konfiguracji wysłałem ping między maszynami. Będąc zalogowanym na Vm1 wykonałem \texttt{ping -c 3 192.168.0.2}.
+
+\begin{verbatim}
+root@:~ # ping -c 3 192.168.0.2
+PING 192.168.0.2 (192.168.0.2): 56 data bytes
+64 bytes from 192.168.0.2: icmp_seq=0 ttl=64 time=0.597 ms
+64 bytes from 192.168.0.2: icmp_seq=1 ttl=64 time=0.749 ms
+64 bytes from 192.168.0.2: icmp_seq=2 ttl=64 time=0.849 ms
+
+--- 192.168.0.2 ping statistics ---
+3 packets transmitted, 3 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 0.597/0.732/0.849/0.104 ms
+\end{verbatim}
+
+Z wyniku komendy widać, że maszyny są ze sobą połączone i mogą wymieniać informacje.
 
 \section{Dynamiczne adresowanie}
 %TODO: Dynamiczne adresowanie
