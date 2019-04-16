@@ -44,7 +44,6 @@ Do wykonania zadań została utworzona sieć o schemacie przedstawionym poniżej
 \end{figure}
 
 \section{Statyczne adresowanie}
-%TODO: Statyczne adresowanie
 %TODO: Spytać tatę czy może być puste
 Ręcznie wybiorę adresy, które przypiszę statycznie interfejsom maszyn.
 
@@ -94,7 +93,6 @@ round-trip min/avg/max/stddev = 0.597/0.732/0.849/0.104 ms
 Z wyniku komendy widać, że maszyny są ze sobą połączone i mogą wymieniać informacje.
 
 \section{Dynamiczne adresowanie}
-%TODO: Dynamiczne adresowanie
 Postanowiłem wykorzystać inną wirtualną maszynę jako serwer DHCP. Wybrałem maszynę z systemem Ubuntu.
 
 \subsection{Konfiguracja serwera}
@@ -162,6 +160,49 @@ Można zaobserwować, że serwer przydzielił dwa pierwsze adresy maszynom.
  
 \section{Druga warstwa sieciowa}
 %TODO: Druga warstwa sieciowa
+Od początku planowałem kładzenie drugiej warstwy sieciowej. Skonfigurowałem serwer DHCP w ten sposób, że przydziela on adresy z drugiej, oddzielnej sieci niż adresy ustawione statycznie. Można to łatwo sprawdzić wywołując \texttt{ifconfig} dla obydwu maszyn.
+
+\paragraph{Vm1:}
+\begin{verbatim}
+# ifconfig
+em0: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> metric 0 mtu 1500
+        options=81009b<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,VLAN_HWCSUM,VLAN_HWFILTER>
+        ether 08:00:27:a7:2f:18
+        inet 192.168.1.121 netmask 0xffffff00 broadcast 192.168.1.255
+        media: Ethernet autoselect (1000baseT <full-duplex>)
+        status: active
+        nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
+em1: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> metric 0 mtu 1500
+        options=81009b<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,VLAN_HWCSUM,VLAN_HWFILTER>
+        ether 08:00:27:d1:f2:36
+        inet 192.168.0.1 netmask 0xffffff00 broadcast 192.168.0.255
+        inet 192.168.2.1 netmask 0xffffff00 broadcast 192.168.2.255
+        media: Ethernet autoselect (1000baseT <full-duplex>)
+        status: active
+        nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
+\end{verbatim}
+
+\paragraph{Vm2:}
+\begin{verbatim}
+# ifconfig
+em0: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> metric 0 mtu 1500
+        options=81009b<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,VLAN_HWCSUM,VLAN_HWFILTER>
+        ether 08:00:27:d2:ad:35
+        inet 192.168.1.125 netmask 0xffffff00 broadcast 192.168.1.255
+        media: Ethernet autoselect (1000baseT <full-duplex>)
+        status: active
+        nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
+em1: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> metric 0 mtu 1500
+        options=81009b<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,VLAN_HWCSUM,VLAN_HWFILTER>
+        ether 08:00:27:9e:5d:3c
+        inet 192.168.0.2 netmask 0xffffff00 broadcast 192.168.0.255
+        inet 192.168.2.2 netmask 0xffffff00 broadcast 192.168.2.255
+        media: Ethernet autoselect (1000baseT <full-duplex>)
+        status: active
+        nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
+\end{verbatim}
+
+Widać wyraźnie, że interfejsy \texttt{em1} mają przypisane \textbf{dwa} adresy ip z różnych sieci.
 
 \section{Analiza ruchu sieciowego}
 %TODO: Analiza ruchu sieciowego
