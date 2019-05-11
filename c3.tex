@@ -225,29 +225,31 @@ lo0: flags=8049<UP,LOOPBACK,RUNNING,MULTICAST> metric 0 mtu 16384
 
 \paragraph{Ubuntu:}
 \begin{verbatim}
-root@:~ # ifconfig  
-em0: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> metric 0 mtu 1500 
-        options=81009b<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,VLAN_HWCSUM,VLAN_HWFILTER>
-        ether 08:00:27:a7:2f:18
-        inet 192.168.1.128 netmask 0xffffff00 broadcast 192.168.1.255
-        media: Ethernet autoselect (1000baseT <full-duplex>)
-        status: active
-        nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
-em1: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> metric 0 mtu 1500
-        options=81009b<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,VLAN_HWCSUM,VLAN_HWFILTER>
-        ether 08:00:27:d1:f2:36
-        inet 192.168.0.1 netmask 0xffffff00 broadcast 192.168.0.255
-        inet 192.168.2.1 netmask 0xffffff00 broadcast 192.168.2.255
-        media: Ethernet autoselect (1000baseT <full-duplex>)
-        status: active
-        nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
-lo0: flags=8049<UP,LOOPBACK,RUNNING,MULTICAST> metric 0 mtu 16384
-        options=680003<RXCSUM,TXCSUM,LINKSTATE,RXCSUM_IPV6,TXCSUM_IPV6>
-        inet6 ::1 prefixlen 128
-        inet6 fe80::1%lo0 prefixlen 64 scopeid 0x3
-        inet 127.0.0.1 netmask 0xff000000
-        groups: lo
-        nd6 options=21<PERFORMNUD,AUTO_LINKLOCAL>
+->  ~ ip a 
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+        link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+        inet 127.0.0.1/8 scope host lo
+        valid_lft forever preferred_lft forever
+        inet6 ::1/128 scope host
+        valid_lft forever preferred_lft forever
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+        link/ether 08:00:27:d0:35:77 brd ff:ff:ff:ff:ff:ff
+        inet 192.168.1.127/24 brd 192.168.1.255 scope global dynamic enp0s3
+        valid_lft 78646sec preferred_lft 78646sec
+        inet6 2002:1fb3:6f53:0:a127:289:2b4b:63b7/64 scope global temporary dynamic
+        valid_lft 26sec preferred_lft 16sec
+        inet6 2002:1fb3:6f53:0:7fae:fbd2:731f:5366/64 scope global mngtmpaddr noprefixroute dynamic
+        valid_lft 26sec preferred_lft 16sec
+        inet6 fe80::3318:4036:2866:1c4a/64 scope link
+        valid_lft forever preferred_lft forever
+3: enp0s8: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+        link/ether 08:00:27:c2:b7:2e brd ff:ff:ff:ff:ff:ff
+        inet 192.168.2.254/32 scope global enp0s8
+        valid_lft forever preferred_lft forever
+        inet 192.168.0.254/32 scope global enp0s8
+        valid_lft forever preferred_lft forever
+        inet6 fe80::a00:27ff:fec2:b72e/64 scope link
+        valid_lft forever preferred_lft forever
 \end{verbatim}
 
 Widać wyraźnie, że interfejsy mają przypisane \textbf{dwa} adresy ip z różnych sieci.
